@@ -1,19 +1,27 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 # 
-# $Id: Number.pm,v 1.12 1999/11/01 23:10:23 sguelich Exp $
+# $Id: Number.pm,v 1.13 1999/11/06 20:00:05 sguelich Exp $
 # 
 # This code is copyright 1999 by Scott Guelich <scott@scripted.com>
 # and is distributed according to the same conditions as Perl itself
 # Please visit http://www.scripted.com/wddx/ for more information
-
 #
 
 package WDDX::Number;
+
+# Auto-inserted by build scripts
+$VERSION = "0.17";
 
 use strict;
 use Carp;
 
 require WDDX;
+
+{ my $i_hate_the_w_flag_sometimes = [
+    $WDDX::PACKET_HEADER,
+    $WDDX::PACKET_FOOTER,
+    $WDDX::Number::VERSION
+] }
 
 1;
 
@@ -58,7 +66,9 @@ sub type {
 
 sub as_packet {
     my( $self ) = @_;
-    my $output = $WDDX::PACKET_HEADER . $self->_serialize . $WDDX::PACKET_FOOTER;
+    my $output = $WDDX::PACKET_HEADER .
+                 $self->_serialize .
+                 $WDDX::PACKET_FOOTER;
 }
 
 

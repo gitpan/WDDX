@@ -1,14 +1,16 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 # 
-# $Id: Parser.pm,v 1.12 1999/11/02 05:59:32 sguelich Exp $
+# $Id: Parser.pm,v 1.13 1999/11/06 20:00:05 sguelich Exp $
 # 
 # This code is copyright 1999 by Scott Guelich <scott@scripted.com>
 # and is distributed according to the same conditions as Perl itself
 # Please visit http://www.scripted.com/wddx/ for more information
-
 #
 
 package WDDX::Parser;
+
+# Auto-inserted by build scripts
+$VERSION = "0.17";
 
 use strict;
 use XML::Parser;
@@ -16,11 +18,19 @@ use XML::Parser;
 require WDDX;
 
 ## Necessary??
-die "WDDX.pm Requires XML::Parser 2.x or greater"
-    unless $XML::Parser::VERSION >= 2;
+# die "WDDX.pm Requires XML::Parser 2.x or greater"
+#     unless $XML::Parser::VERSION >= 2;
 
-# This creates a tainted empty string; see &taint at bottom
+# This creates a tainted empty string (well, unless someone has
+# untainted $0) see &taint at bottom
 $WDDX::Parser::TAINTED = substr( $0, 0, 0 );
+
+{ my $i_hate_the_w_flag_sometimes = [
+        $XML::Parser::VERSION,
+        $WDDX::Parser::TAINTED,
+        \@WDDX::Data_Types,
+        $WDDX::Parser::VERSION
+] }
 
 1;
 

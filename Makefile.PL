@@ -2,6 +2,10 @@ use ExtUtils::MakeMaker;
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
 WriteMakefile(
-    'NAME'	=> 'WDDX',
-    'VERSION_FROM' => 'WDDX.pm', # finds $VERSION
+    'NAME'	        => 'WDDX',
+    'VERSION_FROM'  => 'WDDX.pm', # finds $VERSION
+    'PREREQ_PM'     => { 'XML::Parser'  => 2,
+                         'Carp'         => 0,
+                         'MIME::Base64' => 0
+                       }
 );

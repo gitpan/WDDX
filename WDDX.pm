@@ -1,13 +1,15 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 # 
-# $Id: WDDX.pm,v 1.16 1999/11/02 05:57:18 sguelich Exp $
+# $Id: WDDX.pm,v 1.17 1999/11/06 19:59:24 sguelich Exp $
 # 
 # This code is copyright 1999 by Scott Guelich <scott@scripted.com>
 # and is distributed according to the same conditions as Perl itself
 # Please visit http://www.scripted.com/wddx/ for more information
 
-
 package WDDX;
+
+# Auto-generate $VERSION from CVS/RCS
+$VERSION = do { my @r = ( q$Revision: 1.17 $ =~ /\d+/g ); $r[0]--; sprintf "%d." . "%02d" x $#r, @r };
 
 use strict;
 use Carp;
@@ -24,10 +26,6 @@ require WDDX::Null;
 require WDDX::Binary;
 
 
-# Auto-generate $VERSION from CVS/RCS
-use vars qw( $VERSION );
-$VERSION = do { my @r = ( q$Revision: 1.16 $ =~ /\d+/g ); $r[0]--; sprintf "%d." . "%02d" x $#r, @r };
-
 # Each of these must have a corresponding WDDX::* class;
 # These are lowerclass while the WDDX::* name will have initial cap
 @WDDX::Data_Types = qw( boolean number string datetime null 
@@ -43,6 +41,16 @@ $WDDX::INDENT = undef;
 
 # Create struct() as an alias to the hash() method:
 *struct = \&hash;
+
+{ my $i_hate_the_w_flag_sometimes = [
+        \@WDDX::Data_Types,
+        $WDDX::XML_HEADER,
+        $WDDX::PACKET_HEADER,
+        $WDDX::PACKET_FOOTER,
+        $WDDX::INDENT,
+        \&struct,
+        $WDDX::VERSION
+] }
 
 1;
 
@@ -77,7 +85,9 @@ sub serialize {
     
     croak "You may only serialize WDDX data objects" unless
         eval { $data->can( "as_packet" ) };
-    my $packet = $data->as_packet;
+    my $packet = eval { $data->as_packet };
+    croak _shift_blame( $@ ) if $@;
+    
     return defined( $WDDX::INDENT ) ? _xml_indent( $packet ) : $packet;
 }
 
@@ -181,9 +191,11 @@ sub hash2wddx {
         my $type = lc $coderef->( $name => $val, "HASH" );
         if ( $type ) {
             ref( $val ) eq "HASH"  and
-                $new_hash->{$name} = $wddx->hash2wddx ( $val, sub { $type } ), next;
+                $new_hash->{$name} = $wddx->hash2wddx ( $val, sub { $type } ),
+                next;
             ref( $val ) eq "ARRAY" and
-                $new_hash->{$name} = $wddx->array2wddx( $val, sub { $type } ), next;
+                $new_hash->{$name} = $wddx->array2wddx( $val, sub { $type } ),
+                next;
             my $var = eval "WDDX::\u$type->new( \$val )" or
                 croak "Unable to create object of type WDDX::\u$type: " .
                     _shift_blame( $@ );
@@ -217,9 +229,11 @@ sub array2wddx {
         my $type = lc $coderef->( $i => $val, "ARRAY" );
         if ( $type ) {
             ref( $val ) eq "HASH"  and
-                push @$new_array, hash2wddx ( $wddx, $val, sub { $type } ), next;
+                push @$new_array, hash2wddx ( $wddx, $val, sub { $type } ),
+                next;
             ref( $val ) eq "ARRAY" and
-                push @$new_array, array2wddx( $wddx, $val, sub { $type } ), next;
+                push @$new_array, array2wddx( $wddx, $val, sub { $type } ),
+                next;
             my $var = eval "WDDX::\u$type->new( $i => \$val )" or
                 croak "Unable to create object of type WDDX::\u$type: " .
                     _shift_blame( $@ );
@@ -259,8 +273,9 @@ sub wddx2perl {
 # and croak would blame us even though we're just the messenger...
 sub _shift_blame {
     my $msg = shift;
-    $msg =~ s/at \S*WDDX.*\.pm line \d+//g;
+    $msg =~ s/ at \S*WDDX.*\.pm line \d+//g;
     $msg =~ s/\n\nFile '.*'; Line \d+//g;   # MacPerl thinks different
+    chomp $msg;
     return $msg;
 }
 
@@ -471,7 +486,7 @@ in C<$wddx->header>.
 This method takes the name of a JavaScript variable and returns the
 actual JavaScript code to assign this data object to the given
 JavaScript variable. No temporary variables are created to avoid
-any danger of variable name collisoins.
+any danger of variable name collisions.
 
 Example:
 
@@ -488,10 +503,10 @@ This prints the text (new lines added for readability):
   myArray[1]="Second Choice";
   myArray[2]="Third Choice";
 
-All data types are supported except binary objects, and arrays and
-hashes (structs) can nest to any level. Recordset objects require the 
-JavaScript WddxRecordset constructor. The easiest way to include this
-is to add a reference to the wddx.js file:
+All data types are supported, and arrays and hashes (structs) can nest
+to any level. Recordset and binary objects require the JavaScript
+WddxRecordset and WddxBoolean constructors. The easiest way to include
+these is to add a reference to the wddx.js file:
 
   <SCRIPT NAME="javascript" SRC="wddx.js"></SCRIPT>
 
@@ -749,21 +764,35 @@ Recordsets that are within arrays or hashes are not automatically
 deserialized for you when you deserialize the array or hash. They remain 
 as recordset objects. You can use the methods below to access the data.
 
+Note: It is possible to receive a packet for a recordset that does not
+contain any records. In WDDX, the data type for each field is determined
+by looking at how the data in the field has been tagged; so if there is
+no data, then there is no data type information. Thus if you deserialize
+an empty recordset packet, add data to the resulting recordset object,
+and attempt to serialize it back into a packet, you will get an error
+because WDDX.pm will not know what data type to assign to the data you
+added. To avoid this, you should call the types() method to set the data
+types before you serialize a recordset object that was created by
+deserializing a packet. (If this explanation makes no sense, reread it
+a few times; if it still doesn't make sense, email me and let me know. :)
+
 
 =item $wddx_rec->names
 
-Returns a reference to an array of the field names.
+Returns a reference to an array of the field names. You can also pass
+a reference to an array to set the names.
 
 
 =item $wddx_rec->types
 
-Returns a reference to an array of the field data types.
+Returns a reference to an array of the field data types. You can also pass
+a reference to an array to set the data types.
 
 
 =item $wddx_rec->table
 
-Returns a reference to an array of rows, each containing an array
-of fields.
+Returns a reference to an array of rows, each containing an array of fields.
+You can also pass a reference to an array to set all the data at once.
 
 
 =item $wddx_rec->num_rows

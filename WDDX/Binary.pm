@@ -1,20 +1,28 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 # 
-# $Id: Binary.pm,v 1.4 1999/11/02 07:23:48 sguelich Exp $
+# $Id: Binary.pm,v 1.5 1999/11/06 20:00:05 sguelich Exp $
 # 
 # This code is copyright 1999 by Scott Guelich <scott@scripted.com>
 # and is distributed according to the same conditions as Perl itself
 # Please visit http://www.scripted.com/wddx/ for more information
-
 #
 
 package WDDX::Binary;
+
+# Auto-inserted by build scripts
+$VERSION = "0.17";
 
 use strict;
 use Carp;
 use MIME::Base64;
 
 require WDDX;
+
+{ my $i_hate_the_w_flag_sometimes = [
+    $WDDX::PACKET_HEADER,
+    $WDDX::PACKET_FOOTER,
+    $WDDX::Binary::VERSION
+] }
 
 1;
 
@@ -45,7 +53,9 @@ sub type {
 
 sub as_packet {
     my( $self ) = @_;
-    my $output = $WDDX::PACKET_HEADER . $self->_serialize . $WDDX::PACKET_FOOTER;
+    my $output = $WDDX::PACKET_HEADER .
+                 $self->_serialize .
+                 $WDDX::PACKET_FOOTER;
 }
 
 
@@ -56,8 +66,9 @@ sub as_scalar {
 
 
 sub as_javascript {
-    my( $self ) = @_;
-    croak "JavaScript support is not implemented for binary objects.";
+    my( $self, $js_var ) = @_;
+    my $val = $self->_encode;
+    return "$js_var=new WddxBinary( \"$val\" );";
 }
 
 
@@ -73,7 +84,7 @@ sub is_parser {
 sub _serialize {
     my( $self ) = @_;
     my $length = length $self->{value};
-    my $val = $self->encode;
+    my $val = $self->_encode;
     my $output = "<binary length='$length'>$val</binary>";
     
     return $output;
@@ -87,13 +98,13 @@ sub _deserialize {
 
 
 # This is a separate sub to facilitate adding other encodings in the future
-sub decode {
+sub _decode {
     my( $self ) = @_;
     return decode_base64( $self->{value} );
 }
 
 # This is a separate sub to facilitate adding other encodings in the future
-sub encode {
+sub _encode {
     my( $self ) = @_;
     return encode_base64( $self->{value} );
 }
@@ -132,7 +143,7 @@ sub end_tag {
     my( $self, $element ) = @_;
     
     if ( $element eq "binary" ) {
-        $self = new WDDX::Binary( $self->decode );
+        $self = new WDDX::Binary( $self->_decode );
     }
     else {
         die "</$element> not allowed within <binary> element\n";
@@ -153,7 +164,7 @@ sub is_parser {
 
 
 # This is a separate sub to facilitate adding other encodings in the future
-sub decode {
+sub _decode {
     my( $self ) = @_;
     
     my $decoded = decode_base64( $self->{value} );
@@ -161,10 +172,9 @@ sub decode {
     if ( defined $self->{'length'} ) {
         my $declared = $self->{'length'};
         my $read = length $decoded;
-        if ( $declared != length $read ) {
-## Temporary comment... my Mac version of MIME::Base64 is munged so it's always wrong
-#            die "Declared length of <binary> element ($declared) does not " .
-#                "match length read ($read)\n";
+        if ( $declared != $read ) {
+            die "Declared length of <binary> element ($declared) does not " .
+                "match length read ($read)\n";
         }
     }
     

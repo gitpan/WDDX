@@ -1,14 +1,16 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 # 
-# $Id: Recordset.pm,v 1.11 1999/11/01 23:10:23 sguelich Exp $
+# $Id: Recordset.pm,v 1.12 1999/11/06 20:00:05 sguelich Exp $
 # 
 # This code is copyright 1999 by Scott Guelich <scott@scripted.com>
 # and is distributed according to the same conditions as Perl itself
 # Please visit http://www.scripted.com/wddx/ for more information
-
 #
 
 package WDDX::Recordset;
+
+# Auto-inserted by build scripts
+$VERSION = "0.17";
 
 use strict;
 use Carp;
@@ -16,6 +18,12 @@ use Carp;
 require WDDX;
 
 my @Data_Types = qw( boolean number string datetime );
+
+{ my $i_hate_the_w_flag_sometimes = [
+    $WDDX::PACKET_HEADER,
+    $WDDX::PACKET_FOOTER,
+    $WDDX::Recordset::VERSION
+] }
 
 1;
 
@@ -39,6 +47,7 @@ sub new {
     
     my $type;
     foreach $type ( @$types ) {
+        next unless defined $type; # supports deserializing empty recordsets
         $type = lc $type;
         die "Unsupported data type: '$type'" unless
             grep $type eq $_, @Data_Types;
@@ -79,7 +88,9 @@ sub type {
 
 sub as_packet {
     my( $self ) = @_;
-    my $output = $WDDX::PACKET_HEADER . $self->_serialize . $WDDX::PACKET_FOOTER;
+    my $output = $WDDX::PACKET_HEADER .
+                 $self->_serialize .
+                 $WDDX::PACKET_FOOTER;
 }
 
 
@@ -125,17 +136,38 @@ sub num_columns {
 
 # Returns an array of the field names
 sub names {
-    my( $self ) = @_;
+    my( $self, $new_names ) = @_;
+    
+    if ( defined $new_names ) {
+        croak "You must supply an array ref when setting names"
+            unless ref $new_names;
+        $self->{'names'} = $new_names;
+    }
+    
     return $self->{'names'};
 }
 
 sub types {
-    my( $self ) = @_;
+    my( $self, $new_types ) = @_;
+    
+    if ( defined $new_types ) {
+        croak "You must supply an array ref when setting types"
+            unless ref $new_types;
+        $self->{'types'} = $new_types;
+    }
+    
     return $self->{'types'};
 }
 
 sub table {
-    my( $self ) = @_;
+    my( $self, $new_value ) = @_;
+    
+    if ( defined $new_value ) {
+        croak "You must supply an array ref when setting the table data"
+            unless ref $new_value;
+        $self->{'value'} = $new_value;
+    }
+    
     return $self->{value};
 }
 
@@ -243,7 +275,23 @@ sub add_row {
     croak "Number of elements in row does not match number of columns in " .
         "recordset" unless @$row == $self->num_columns;
     
-    push @{ $self->table}, $row;
+    push @{ $self->table }, $row;
+}
+
+sub _check_data_type {
+    my( $self, $num_rows ) = @_;
+    
+    if ( @{ $self->types } ) {
+        croak "Number of elements in row does not match number of columns in " .
+            "recordset" unless $num_rows == $self->num_columns;
+    }
+    else {
+        warn "No data types defined for this recordset; assuming 'string'.\n";
+        my @types;
+        for ( 1 .. $num_rows ) { push @types, "string"; }
+        $self->{'types'} = \@types;
+    }
+
 }
 
 sub del_row {
@@ -288,8 +336,8 @@ sub get_element {
     
     croak "Field [ $label, $row_num ] doesn't exist" if 
         ! defined( $col_num ) or
-        $row_num > $self->num_rows or
-        $col_num > $self->num_columns;
+        $row_num >= $self->num_rows or
+        $col_num >= $self->num_columns;
     
     return $data->[$row_num][$col_num];
 }
@@ -301,8 +349,8 @@ sub set_element {
     
     croak "Field [ $label, $row_num ] doesn't exist" if 
         ! defined( $col_num ) or
-        $row_num > $self->num_rows or
-        $col_num > $self->num_columns;
+        $row_num >= $self->num_rows or
+        $col_num >= $self->num_columns;
     
     $data->[$row_num][$col_num] = $value;
 }
@@ -337,8 +385,14 @@ sub _serialize {
     my $names_str = join ",", @$names;
     my $type;
     
-    foreach $type ( @$types ) {
-        die "Unsupported data type: '$_'" unless grep $type eq $_, @Data_Types;
+    # We don't need to worry about data types if we don't have any data    
+    if ( $self->num_rows ) {
+        foreach $type ( @$types ) {
+            croak "No data types were defined for this recordset" unless
+                defined $type;
+            die "Unsupported data type: '$_'" unless
+                grep $type eq $_, @Data_Types;
+        }
     }
     
     my $output = "<recordset rowCount='$rows' fieldNames='$names_str'>";
@@ -441,7 +495,19 @@ sub end_tag {
     
     if ( $element eq "recordset" and not --$self->{seen_recordsets} ) {
         my @data = map { [ map $_->_deserialize, @$_ ] } @{ $self->{value} };
-        $self = new WDDX::Recordset( $self->{'names'}, $self->{'types'}, \@data );
+        
+        # This is kinda a kludge to allow us to deserialize empty recordsets
+        # Since an empty recordset will have no data type tags, we set the
+        # data type of each field to undef
+        unless ( @data ) {
+            $self->{'types'} = [ map undef, ( 1 .. @{ $self->{'names'} } ) ];
+        }
+        
+        $self = new WDDX::Recordset(
+                    $self->{'names'},
+                    $self->{'types'},
+                    \@data
+                );
     }
     elsif ( $element eq "field" and $self->{seen_recordsets} == 1 ) {
         my $name = $self->{'names'}[ $self->{curr_field} ];
@@ -470,7 +536,7 @@ sub append_data {
     if ( $parse_var ) {
         $parse_var->append_data( $data );
     }
-    else {
+    elsif ( $data =~ /\S/ ) {
         die "No loose character data is allowed within <recordset> elements\n";
     }
 }

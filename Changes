@@ -1,5 +1,20 @@
 WDDX History
 
+Version 0.17 (11/6/99)
+
+Mainly bug fixes.
+
+  * Added support as_javascript() support to binary data objects.
+  * Added $VERSION to all modules to keep CPAN happy.
+  * Added PREREQ_PM to Makefile.PL.
+  * Added code to quiet warnings when using -w flag.
+  * Fixed bug that prevented WDDX.pm from deserializing empty recordsets
+    and this required some minor tweaking to Recordset object (shouldn't
+    affect backwards compatibility).
+  * Fixed bug introduced last version that caused deserialization
+    problems when there is additional whitespace between elements.
+
+
 Version 0.16 (11/1/99)
 
 Minor stuff I noticed as I was buidling, but see 0.15 too since it was
