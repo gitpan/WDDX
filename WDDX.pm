@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # 
-# $Id: WDDX.pm,v 1.17 1999/11/06 19:59:24 sguelich Exp $
+# $Id: WDDX.pm,v 2.0 2000/01/17 17:04:38 sguelich Exp $
 # 
 # This code is copyright 1999 by Scott Guelich <scott@scripted.com>
 # and is distributed according to the same conditions as Perl itself
@@ -9,7 +9,7 @@
 package WDDX;
 
 # Auto-generate $VERSION from CVS/RCS
-$VERSION = do { my @r = ( q$Revision: 1.17 $ =~ /\d+/g ); $r[0]--; sprintf "%d." . "%02d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.0 $ =~ /\d+/g ); $r[0]--; sprintf "%d." . "%02d" x $#r, @r };
 
 use strict;
 use Carp;
@@ -185,17 +185,21 @@ sub hash2wddx {
     
     while ( my( $name, $val ) = each %$hashref ) {
         
-        eval { $val->can( "_serialize" ) } and
-            $new_hash->{$name} = $val, next;
+        eval { $val->can( "_serialize" ) } and do {
+            $new_hash->{$name} = $val;
+            next;
+        };
         
         my $type = lc $coderef->( $name => $val, "HASH" );
         if ( $type ) {
-            ref( $val ) eq "HASH"  and
-                $new_hash->{$name} = $wddx->hash2wddx ( $val, sub { $type } ),
+            ref( $val ) eq "HASH"  and do {
+                $new_hash->{$name} = $wddx->hash2wddx ( $val, sub { $type } );
                 next;
-            ref( $val ) eq "ARRAY" and
-                $new_hash->{$name} = $wddx->array2wddx( $val, sub { $type } ),
+            };
+            ref( $val ) eq "ARRAY" and do {
+                $new_hash->{$name} = $wddx->array2wddx( $val, sub { $type } );
                 next;
+            };
             my $var = eval "WDDX::\u$type->new( \$val )" or
                 croak "Unable to create object of type WDDX::\u$type: " .
                     _shift_blame( $@ );
@@ -203,10 +207,14 @@ sub hash2wddx {
             next;
         }
         
-        ref( $val ) eq "HASH"  and
-            $new_hash->{$name} = hash2wddx ( $wddx, $val, $coderef ), next;
-        ref( $val ) eq "ARRAY" and
-            $new_hash->{$name} = array2wddx( $wddx, $val, $coderef ), next;
+        ref( $val ) eq "HASH"  and do {
+            $new_hash->{$name} = hash2wddx ( $wddx, $val, $coderef );
+            next;
+        };
+        ref( $val ) eq "ARRAY" and do {
+            $new_hash->{$name} = array2wddx( $wddx, $val, $coderef );
+            next;
+        };
         
         # Scalars treated as strings by default
         $new_hash->{$name} = $wddx->string( $val );
@@ -223,17 +231,21 @@ sub array2wddx {
     for ( my $i = 0; $i < @$arrayref; $i++ ) {
         my $val = $arrayref->[$i];
         
-        eval { $val->can( "_serialize" ) } and
-            push @$new_array, $val, next;
+        eval { $val->can( "_serialize" ) } and do {
+            push @$new_array, $val;
+            next;
+        };
         
         my $type = lc $coderef->( $i => $val, "ARRAY" );
         if ( $type ) {
-            ref( $val ) eq "HASH"  and
-                push @$new_array, hash2wddx ( $wddx, $val, sub { $type } ),
+            ref( $val ) eq "HASH"  and do {
+                push @$new_array, hash2wddx( $wddx, $val, sub { $type } );
                 next;
-            ref( $val ) eq "ARRAY" and
-                push @$new_array, array2wddx( $wddx, $val, sub { $type } ),
+            };
+            ref( $val ) eq "ARRAY" and do {
+                push @$new_array, array2wddx( $wddx, $val, sub { $type } );
                 next;
+            };
             my $var = eval "WDDX::\u$type->new( $i => \$val )" or
                 croak "Unable to create object of type WDDX::\u$type: " .
                     _shift_blame( $@ );
@@ -241,10 +253,15 @@ sub array2wddx {
             next;
         }
         
-        ref( $val ) eq "HASH"  and
-            push @$new_array, hash2wddx ( $wddx, $val, $coderef ), next;
-        ref( $val ) eq "ARRAY" and
-            push @$new_array, array2wddx( $wddx, $val, $coderef ), next;
+        ref( $val ) eq "HASH"  and do {
+            push @$new_array, hash2wddx( $wddx, $val, $coderef );
+            next;
+        };
+        
+        ref( $val ) eq "ARRAY" and do {
+            push @$new_array, array2wddx( $wddx, $val, $coderef );
+            next;
+        };
         
         # Scalars treated as strings by default
         push @$new_array, $wddx->string( $val );
@@ -664,15 +681,44 @@ WDDX::Recordsets remain as WDDX data objects.
 
 =item $wddx_array->get_element( $i )
 
+=item $wddx_array->get( $i )
+
 This allows you to get an element of a WDDX::Array as a data object 
 instead of having it deserialized to Perl.
 
-I imagine that most people will convert to Perl and work from there. 
-However, I can add other methods that also allow you to modify the
-data objects within a WDDX::Array directly: e.g., num_elements(), 
-set_element(), del_element(), push(), pop(), shift(), and unshift(). 
-Please let me know if this would be useful to you.
+=item $wddx_array->set( $i => $wddx_obj );
 
+This allows you to set an element in a WDDX::Array. Note that C<$wddx_obj>
+should be a WDDX data object of some type.
+
+=item $wddx_array->splice( $offset, $length, $wddx_obj1, $wddx_obj2, ... );
+
+=item $wddx_array->splice( $offset, $length );
+
+=item $wddx_array->splice( $offset );
+
+This allows you to insert or delete elements in a WDDX::Array using
+the syntax of Perl's built-in C<splice> function.
+
+=item $wddx_array->length();
+
+This returns the number of elements in the WDDX::Array object.
+
+=item $wddx_array->push( $wddx_obj1, $wddx_obj2, ... );
+
+This will push the given elements onto the WDDX::Array object.
+
+=item $wddx_array->pop();
+
+This will pop the last element off the WDDX::Array object and return it.
+
+=item $wddx_array->unshift( $wddx_obj1, $wddx_obj2, ... );
+
+This will unshift the given elements onto the WDDX::Array object.
+
+=item $wddx_array->shift();
+
+This will shift the first element off the WDDX::Array object and return it.
 
 
 =back
@@ -712,14 +758,30 @@ WDDX::Recordsets remain as data objects.
 
 =item $wddx_hash->get_element( $key );
 
+=item $wddx_hash->get( $key );
+
 This allows you to get an element of a WDDX::Struct as a data object 
 instead of having it deserialized to Perl.
 
-I imagine that most people will convert to Perl and work from there. 
-However, I can add other methods that also act similarly on the
-underlying WDDX objects such as num_elements(), set_element(),
-del_element(), keys(), values(). Please let me know if this would be
-useful to you.
+=item $wddx_hash->set( $key => $wddx_obj );
+
+This allows you to set a key/value pair in a WDDX::Struct. Note that
+C<$wddx_obj> should be a WDDX data object of some type.
+
+=item $wddx_hash->delete( $key );
+
+This allows you to delete a key from a WDDX::Struct.
+
+=item $wddx_hash->keys();
+
+This will return a list of keys for the WDDX::Struct object or the number
+of keys (if called in a scalar context).
+
+=item $wddx_hash->values();
+
+This will return a list of values for the WDDX::Struct object or the number
+of values (if called in a scalar context). Note that each one of these
+values should be a WDDX data object of some type.
 
 
 =back
@@ -1065,7 +1127,7 @@ particular data structure.
 
 I pulled the examples out of here when I realized that this POD was
 over 50 screenfuls on a standard term! For more lengthy examples,
-please visit http://www.scripted.com/wddx/.
+please visit http://www.scripted.com/wddx/ or http://www.wddx.org/.
 
 =head1 BUGS
 
@@ -1076,10 +1138,11 @@ Every element of data must be encoded as an object. This increases
 memory usage somewhat, and it also means any data you transfer must
 fit in memory.
 
-This is actually a non-bug: XML::Parser appears to untaint data as it
-parses it. This is dangerous. WDDX.pm retaints the data it receives
-from XML::Parser so you should be safe if you are running in taint
-mode. Taint is explained L<perlsec>.
+This is actually a non-bug: XML::Parser untaints data as it parses it.
+This is dangerous. WDDX.pm retaints the data it receives from XML::Parser
+so you should be safe if you are running in taint mode. Note: WDDX.pm
+uses $0 to retaint data, so if you untaint $0 then any subsequent
+WDDX.pm data will be untainted too. Taint is explained L<perlsec>. 
 
 
 =head1 CREDITS
@@ -1095,7 +1158,8 @@ for this module:
 
  Thomas R. Hall
  David J. MacKenzie
-
+ Jon Sala
+ Wolfgang ???
 
 =head1 AUTHOR
 

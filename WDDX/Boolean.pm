@@ -1,8 +1,8 @@
 #!/usr/bin/perl -w
 # 
-# $Id: Boolean.pm,v 1.13 1999/11/06 20:00:05 sguelich Exp $
+# $Id: Boolean.pm,v 2.0 2000/01/17 17:05:25 sguelich Exp $
 # 
-# This code is copyright 1999 by Scott Guelich <scott@scripted.com>
+# This code is copyright 1999-2000 by Scott Guelich <scott@scripted.com>
 # and is distributed according to the same conditions as Perl itself
 # Please visit http://www.scripted.com/wddx/ for more information
 #
@@ -10,7 +10,7 @@
 package WDDX::Boolean;
 
 # Auto-inserted by build scripts
-$VERSION = "0.17";
+$VERSION = "1.00";
 
 use strict;
 use Carp;

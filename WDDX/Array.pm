@@ -1,8 +1,8 @@
 #!/usr/bin/perl -w
 # 
-# $Id: Array.pm,v 1.14 1999/11/06 20:00:05 sguelich Exp $
+# $Id: Array.pm,v 2.0 2000/01/17 17:05:25 sguelich Exp $
 # 
-# This code is copyright 1999 by Scott Guelich <scott@scripted.com>
+# This code is copyright 1999-2000 by Scott Guelich <scott@scripted.com>
 # and is distributed according to the same conditions as Perl itself
 # Please visit http://www.scripted.com/wddx/ for more information
 #
@@ -10,7 +10,7 @@
 package WDDX::Array;
 
 # Auto-inserted by build scripts
-$VERSION = "0.17";
+$VERSION = "1.00";
 
 use strict;
 use Carp;
@@ -84,6 +84,87 @@ sub as_javascript {
 sub get_element {
     my( $self, $index ) = @_;
     return $self->{value}[$index];
+}
+
+
+# Method alias
+*get = *get = \&get_element;
+
+
+sub set {
+    my( $self, %pairs ) = @_;
+    my( $index, $value );
+    
+    while ( ( $index, $value ) = each %pairs ) {
+        croak "The values assigned must be WDDX data objects.\n" 
+            unless eval { $value->can( "_serialize" ) };
+        $self->{value}[$index] = $value;
+    }
+}
+
+
+sub splice {
+    my( $self, $offset, $length, @values ) = @_;
+    my @result;
+    
+    if ( defined @values ) {
+        foreach ( @values ) {
+            croak "The values assigned must be WDDX data objects.\n" 
+                unless eval { $_->can( "_serialize" ) };
+        }
+        @result = splice @{ $self->{value} }, $offset, $length, @values;
+    }
+    elsif ( defined $length ) {
+        @result = splice @{ $self->{value} }, $offset, $length;
+    }
+    else {
+        @result = splice @{ $self->{value} }, $offset;
+    }
+    
+    if ( wantarray ) {
+        return @result;
+    }
+    else {
+        return @result ? pop @result : undef;
+    }
+}
+
+
+sub length {
+    my( $self ) = @_;
+    return scalar @{ $self->{value} };
+}
+
+
+sub push {
+    my( $self, @values ) = @_;
+    foreach ( @values ) {
+        croak "The values assigned must be WDDX data objects.\n" 
+            unless eval { $_->can( "_serialize" ) };
+    }
+    push @{ $self->{value} }, @values;
+}
+
+
+sub pop {
+    my( $self ) = @_;
+    pop @{ $self->{value} };
+}
+
+
+sub shift {
+    my( $self ) = @_;
+    shift @{ $self->{value} };
+}
+
+
+sub unshift {
+    my( $self , @values ) = @_;
+    foreach ( @values ) {
+        croak "The values assigned must be WDDX data objects.\n" 
+            unless eval { $_->can( "_serialize" ) };
+    }
+    unshift @{ $self->{value} }, @values;
 }
 
 

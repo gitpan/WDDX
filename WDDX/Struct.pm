@@ -1,8 +1,8 @@
 #!/usr/bin/perl -w
 # 
-# $Id: Struct.pm,v 1.7 1999/11/06 20:00:05 sguelich Exp $
+# $Id: Struct.pm,v 2.0 2000/01/17 17:05:25 sguelich Exp $
 # 
-# This code is copyright 1999 by Scott Guelich <scott@scripted.com>
+# This code is copyright 1999-2000 by Scott Guelich <scott@scripted.com>
 # and is distributed according to the same conditions as Perl itself
 # Please visit http://www.scripted.com/wddx/ for more information
 #
@@ -10,7 +10,7 @@
 package WDDX::Struct;
 
 # Auto-inserted by build scripts
-$VERSION = "0.17";
+$VERSION = "1.00";
 
 use strict;
 use Carp;
@@ -33,11 +33,11 @@ require WDDX;
 sub new {
     my( $class, $hashref ) = @_;
     
-    croak "You must supply a hash ref when creating a new $class object\n"
+    croak "You must supply a hash ref when creating a new $class object.\n"
         unless eval { %$hashref || 1 };
     
     foreach ( values %$hashref ) {
-        croak "Each element of the supplied hash must be a WDDX data object\n" 
+        croak "Each element of the supplied hash must be a WDDX data object.\n" 
             unless eval { $_->can( "_serialize" ) };
     }
     
@@ -87,6 +87,43 @@ sub as_javascript {
 sub get_element {
     my( $self, $key ) = @_;
     return $self->{value}{$key};
+}
+
+
+# Method alias
+*get = *get = \&get_element;
+
+
+sub set {
+    my( $self, %pairs ) = @_;
+    my( $key, $value );
+    while ( ( $key, $value ) = each %pairs ) {
+        croak "The value of each pair must be a WDDX data object.\n" 
+            unless eval { $value->can( "_serialize" ) };
+        $self->{value}{$key} = $value;
+    }
+}
+
+
+sub delete {
+    my( $self, $key ) = @_;
+    delete $self->{value}{$key};
+}
+
+
+sub keys {
+    my( $self ) = @_;
+    return wantarray ?
+        ( keys %{ $self->{value} } ) :
+        scalar keys %{ $self->{value} };
+}
+
+
+sub values {
+    my( $self ) = @_;
+    return wantarray ?
+        ( values %{ $self->{value} } ) :
+        scalar values %{ $self->{value} };
 }
 
 

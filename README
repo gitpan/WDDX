@@ -1,5 +1,5 @@
 WDDX.pm
-$Date: 1999/11/02 06:25:00 $
+$Date: 2000/01/17 17:04:38 $
 by Scott Guelich <scott@scripted.com>
 
 This module provides a perl interface to WDDX. The latest version of this
@@ -10,31 +10,18 @@ http://www.wddx.org/.
 This code is copyright 1999 by Scott Guelich. You may use and distribute 
 this code according to the same terms that Perl is distributed.
 
-NOTE
-----
-
-WDDX 0.171 is a minor update that fixes a bug in the Recordset object
-where as_javasscript() was calling the deprecated get_field() method and
-thus generating a warning. This bug was fixed in WDDX 0.17 that is
-included in the WDDX SDK on the wddx.org website and on the Allaire 4.5 CD.
-Therefore, so as not to get out of synch with that 0.17 version, I'm not
-incrememting the primary version number but am releasing this as a minor
-revision. Sorry for any confusion.
-
 
 INSTALL
 -------
 
-NOTE: These modules now require the MIME::Base64 module available from CPAN,
-http://www.cpan.org/modules/by-module/MIME/. The file you want will be
-named MIME-Base64-x.xx.tar.gz (where x is some digit). You also need
-XML::Parser, which will be at http://www.cpan.org/modules/by-module/XML/
-and named XML-Parser-x.xx.tar.gz. You can find help for installing both
-these modules at http://www.perl.com/CPAN/modules/INSTALL.html.
+NOTE: These modules require the MIME::Base64 module, available at
+<http://www.cpan.org/modules/by-module/MIME/> and XML::Parser, available
+at <http://www.cpan.org/modules/by-module/XML/>. You can find help for
+installing these modules at http://www.perl.com/CPAN/modules/INSTALL.html.
 
 I have been told that recent distributions of ActiveState Perl include
-these modules, so Windows users should check before downloading and 
-installing them.
+both MIME::Base64 and XML::Parser, so Windows users should check before
+downloading and installing them.
 
 To install the WDDX modules, use CPAN.pm. If you can't use CPAN.pm,
 then follow these steps:
@@ -55,7 +42,7 @@ then follow these steps:
 If you do not have superuser priveleges and your sysadmin is too unfriendly
 to install this for you, then you can install this module in another
 location by replacing "perl Makefile.PL" from step 2 with this (replace
-/home/USER/lib with some directory on your system):
+/home/USER/lib with some directory on your system that you can write to):
 
     perl Makefile.PL LIB=/home/USER/lib
 
@@ -67,21 +54,25 @@ to the top of your scripts:
     use lib "/home/USER/lib";
 
 
-Non-Unix Install
-----------------
+Manual Install
+--------------
 
 If your system does not support 'make', then you can manually copy
 WDDX.pm and the WDDX folder to the site_perl folder in your Perl lib
-folder. 
+folder.
 
+
+Usage
+-----
 
 Refer to the POD in WDDX.pm for usage and more information.
 
 
 ----------------------------
 
-If you find any problems or have any questions or comments, please contact
-me at scott@scripted.com.
+If you find any problems or have any comments, please contact me at
+scott@scripted.com. You can also find all sorts of WDDX help and
+resources at www.wddx.org, especially in the WDDX Forums.
 
 Have fun.
 

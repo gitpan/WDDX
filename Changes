@@ -1,5 +1,27 @@
 WDDX History
 
+Version 1.00 (1/17/00)
+
+Added new methods to WDDX::Array and WDDX::Struct.
+
+  * Added get(), set(), splice(), length(), push(), pop(), shift(), &
+    unshift() to WDDX::Array.
+  * Added get(), set(), delete(), keys(), and values() to WDDX::Struct.
+  * Decided to up the version to 1.00. I probably should have done this
+    earlier: 0.13 was effectively 1.00 beta 1, and 0.17 probably should
+    have been 1.00. In any case everything seems stable now with nothing
+    left on the to do list.
+
+Version 0.18 (1/4/00)
+
+Bug fix.
+
+  * Fixed bugs in array2wddx() and hash2wddx(). (reported by Jon Sala)
+  * Started citing bug-reporters in this file (Nate Weiss, Thomas Hall,
+    and David MacKenzie collectively get credit for reporting much of
+    the bugs previously fixed).
+
+
 Version 0.17 (11/6/99)
 
 Mainly bug fixes.
