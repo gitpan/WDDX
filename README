@@ -10,6 +10,17 @@ http://www.wddx.org/.
 This code is copyright 1999 by Scott Guelich. You may use and distribute 
 this code according to the same terms that Perl is distributed.
 
+NOTE
+----
+
+WDDX 0.171 is a minor update that fixes a bug in the Recordset object
+where as_javasscript() was calling the deprecated get_field() method and
+thus generating a warning. This bug was fixed in WDDX 0.17 that is
+included in the WDDX SDK on the wddx.org website and on the Allaire 4.5 CD.
+Therefore, so as not to get out of synch with that 0.17 version, I'm not
+incrememting the primary version number but am releasing this as a minor
+revision. Sorry for any confusion.
+
 
 INSTALL
 -------

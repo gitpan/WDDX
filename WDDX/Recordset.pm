@@ -109,7 +109,7 @@ sub as_javascript {
         my $name = $self->names()->[$col];
         $output .= "$js_var.$name=new Array();";
         for ( my $row = 0; $row < $self->num_rows; $row++ ) {
-            my $field = $self->get_field( $row, $col );
+            my $field = $self->get_element( $col, $row );
             my $var = eval "WDDX::\u$types->[$col]\->new( \$field )";
             die "$@\n" if $@;
             $output .= $var->as_javascript( "$js_var.$name\[$row\]" );

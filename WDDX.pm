@@ -505,7 +505,7 @@ This prints the text (new lines added for readability):
 
 All data types are supported, and arrays and hashes (structs) can nest
 to any level. Recordset and binary objects require the JavaScript
-WddxRecordset and WddxBoolean constructors. The easiest way to include
+WddxRecordset and WddxBinary constructors. The easiest way to include
 these is to add a reference to the wddx.js file:
 
   <SCRIPT NAME="javascript" SRC="wddx.js"></SCRIPT>
