@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # 
-# $Id: Recordset.pm,v 2.1 2000/07/30 02:13:01 sguelich Exp $
+# $Id: Recordset.pm,v 1.1.1.1 2003/10/28 16:04:37 andy Exp $
 # 
 # This code is copyright 1999-2000 by Scott Guelich <scott@scripted.com>
 # and is distributed according to the same conditions as Perl itself

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # 
-# $Id: Boolean.pm,v 2.0 2000/01/17 17:05:25 sguelich Exp $
+# $Id: Boolean.pm,v 1.1.1.1 2003/10/28 16:04:37 andy Exp $
 # 
 # This code is copyright 1999-2000 by Scott Guelich <scott@scripted.com>
 # and is distributed according to the same conditions as Perl itself

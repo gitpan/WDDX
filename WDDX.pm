@@ -1,16 +1,125 @@
-#!/usr/bin/perl -w
-# 
-# $Id: WDDX.pm,v 2.1 2000/07/30 02:12:44 sguelich Exp $
-# 
-# This code is copyright 1999-2000 by Scott Guelich <scott@scripted.com>
-# and is distributed according to the same conditions as Perl itself
-# Please visit http://www.scripted.com/wddx/ for more information
-#
-
 package WDDX;
 
-# Auto-generate $VERSION from CVS/RCS
-$VERSION = do { my @r = ( q$Revision: 2.1 $ =~ /\d+/g ); $r[0]--; sprintf "%d." . "%02d" x $#r, @r };
+=head1 NAME
+
+WDDX.pm - Module for reading and writing WDDX packets
+
+=head1 VERSION
+
+Version 1.02
+
+    $Header: /home/cvs/wddx/WDDX.pm,v 1.4 2003/12/02 03:41:10 andy Exp $
+
+=cut
+
+use vars qw( $VERSION );
+$VERSION = "1.02";
+
+=head1 NAME
+
+
+=head1 SYNOPSIS
+
+ use WDDX;
+ my $wddx = new WDDX;
+ 
+ # Serialization example
+ 
+ my $wddx_hash = $wddx->hash( {
+         str     =>  $wddx->string( "Welcome to WDDX!\n" ),
+         num     =>  $wddx->number( -12.456 ),
+         date    =>  $wddx->datetime( date ),
+         bool    =>  $wddx->boolean( 1 ),
+         arr     =>  $wddx->array( [
+                     $wddx->boolean( 0 ),
+                     $wddx->number( 10 ),
+                     $wddx->string( "third element" ),
+                 ] ),
+         rec     =>  $wddx->recordset(
+                     [ "NAME", "AGE" ],
+                     [ "string", "number" ],
+                     [
+                         [ "John Doe", 34 ],
+                         [ "Jane Doe", 25 ],
+                         [ "Fred Doe", 90 ],
+                     ]
+                 ),
+         obj     =>  $wddx->hash( {
+                     str => $wddx->string( "a string" ),
+                     num => $wddx->number( 3.14159 ),
+                 } ),
+         bin     => $wddx->binary( $img_data ),
+         null    => $wddx->null(),
+     } );
+ 
+ print $wddx->header;
+ print $wddx->serialize( $wddx_hash );
+ 
+ # Deserialization example
+ 
+ my $wddx_request = $wddx->deserialize( $packet );
+ 
+ # Assume that our code expects an array
+ $wddx_request->type eq "array" or die "Invalid request";
+ my $array_ref = $wddx_request->as_arrayref;
+
+
+=head1 DESCRIPTION
+
+=head2 About WDDX
+
+From L<http://www.wddx.org/>:
+
+=over 4
+
+The Web Distributed Data Exchange, or WDDX, is a free, open XML-based
+technology that allows Web applications created with any platform to
+easily exchange data with one another over the Web.
+
+=back
+
+=head2 WDDX and Perl
+
+WDDX defines basic data types that mirror the data types available in
+other common programming languages. Many of these data types don't
+have corresponding data types in Perl. To Perl, strings, numbers,
+booleans, and dates are just scalars. However, in order to communicate
+effectively with other languages (and this is the point of WDDX), you
+do have to learn the basic WDDX data types. Here is a table that maps
+the WDDX data type to Perl, along with the intermediate object WDDX.pm
+represents it as:
+
+ WDDX Type      WDDX.pm Data Object      Perl Type
+ ---------      -------------------      ---------
+ String         WDDX::String             Scalar
+ Number         WDDX::Number             Scalar
+ Boolean        WDDX::Boolean            Scalar (1 or "")
+ Datetime       WDDX::Datetime           Scalar (seconds since epoch)
+ Null           WDDX::Null               Scalar (undef)
+ Binary         WDDX::Binary             Scalar
+ Array          WDDX::Array              Array
+ Struct         WDDX::Struct             Hash
+ Recordset      WDDX::Recordset          WDDX::Recordset
+
+
+In languages that have data types similar to the WDDX data types, the
+WDDX modules allow you to convert directly from a variable to a WDDX
+packet and vice versa. This Perl implementation is different; here you
+must always go through an intermediate stage where the data is
+represented by an object with a corresponding data type. These objects
+can be converted to a WDDX packet, converted to a basic Perl type, or
+converted to JavaScript code (which will recreate the data for you in
+JavaScript). We will refer to these objects as I<data objects>
+throughout this documentation.
+
+=head1 Requirements
+
+This module requires L<XML::Parser> and L<MIME::Base64>, which are
+both available on CPAN at L<http://www.cpan.org/>. Windows users note:
+These modules use compiled code, but I have been told that they are both
+included with recent distributions of ActiveState Perl.
+
+=cut
 
 use strict;
 use Carp;
@@ -56,9 +165,15 @@ $WDDX::INDENT = undef;
 1;
 
 
-#/-----------------------------------------------------------------------
-# Public Constructor
-# 
+=head1 METHODS
+
+=head2 new
+
+This creates a new WDDX object. You need one of these to do pretty much 
+anything else. It doesn't take any arguments.
+
+=cut
+
 sub new {
     my $this = shift;
     my $class = ref( $this ) || $this;
@@ -69,9 +184,22 @@ sub new {
 }
 
 
-#/-----------------------------------------------------------------------
-# Public Methods
-# 
+=head2 C<< $wddx->deserialize( $string_or_filehandle ) >>
+
+This method deserializes a WDDX packet and returns a data object. Note
+that you can pass either a string or a reference to an open filehandle
+containing a packet (XML::Parser is flexible this way):
+
+  $wddx_obj = $wddx->deserialize( $packet );     # OR
+  $wddx_obj = $wddx->deserialize( \*HANDLE );
+
+If WDDX.pm or the underlying L<XML::Parser> finds any errors with the
+structure of the WDDX packet, then it will C<die> with an error
+message that identifies the problem. If you don't want this to terminate
+your script, you will have to place this call within an C<eval> block
+to trap the C<die>.
+
+=cut
 
 sub deserialize {
     my( $self, $xml ) = @_;
@@ -80,6 +208,21 @@ sub deserialize {
     return $parser->parse( $xml, $self );
 }
 
+
+=head2 C<< $wddx->serialize( $wddx_obj ) >>
+
+This accepts a data object as an argument and returns a WDDX packet.
+This method calls the as_packet() method on the data object
+it receives. However, this method does provide one feature that
+C<as_packet()> does not. If C<$WDDX::INDENT> is set to a defined value,
+then the generated WDDX packet is indented using C<$WDDX::INDENT>
+as the unit of indentation. Otherwise packets are generated without
+extra whitespace.
+
+Note that the generated packet is not a valid XML document without the
+header, see below.
+
+=cut
 
 sub serialize {
     my( $self, $data ) = @_;
@@ -92,6 +235,13 @@ sub serialize {
     return defined( $WDDX::INDENT ) ? _xml_indent( $packet ) : $packet;
 }
 
+
+=head2 C<< $wddx->header >>
+
+This returns a header that should accompany every serialized packet you 
+send.
+
+=cut
 
 sub header {
     return $WDDX::XML_HEADER;
@@ -317,167 +467,7 @@ sub _xml_indent {
     return $xml;
 }
 
-
-############################################################
-#
-# Documentation
-#
-
-=head1 NAME
-
-WDDX.pm - a module for reading and writing WDDX packets
-
-=head1 SYNOPSIS
-
- use WDDX;
- my $wddx = new WDDX;
- 
- ##########################
- ## Serialization example
- 
- my $wddx_hash = $wddx->hash( {
-         str     =>  $wddx->string( "Welcome to WDDX!\n" ),
-         num     =>  $wddx->number( -12.456 ),
-         date    =>  $wddx->datetime( date ),
-         bool    =>  $wddx->boolean( 1 ),
-         arr     =>  $wddx->array( [
-                     $wddx->boolean( 0 ),
-                     $wddx->number( 10 ),
-                     $wddx->string( "third element" ),
-                 ] ),
-         rec     =>  $wddx->recordset(
-                     [ "NAME", "AGE" ],
-                     [ "string", "number" ],
-                     [
-                         [ "John Doe", 34 ],
-                         [ "Jane Doe", 25 ],
-                         [ "Fred Doe", 90 ],
-                     ]
-                 ),
-         obj     =>  $wddx->hash( {
-                     str => $wddx->string( "a string" ),
-                     num => $wddx->number( 3.14159 ),
-                 } ),
-         bin     => $wddx->binary( $img_data ),
-         null    => $wddx->null(),
-     } );
- 
- print $wddx->header;
- print $wddx->serialize( $wddx_hash );
- 
- ##########################
- ## Deserialization example
- 
- my $wddx_request = $wddx->deserialize( $packet );
- 
- # Assume that our code expects an array
- $wddx_request->type eq "array" or die "Invalid request";
- my $array_ref = $wddx_request->as_arrayref;
-
-
-=head1 DESCRIPTION
-
-=head2 About WDDX
-
-This is from the WDDX.org web site: "The Web Distributed Data Exchange,
-or WDDX, is a free, open XML-based technology that allows Web
-applications created with any platform to easily exchange data with
-one another over the Web."
-
-For more information about WDDX, visit http://www.wddx.org/. For
-information about using Perl with WDDX (including examples) you
-can also visit http://www.scripted.com/wddx/.
-
-=head2 WDDX and Perl
-
-WDDX defines basic data types that mirror the data types available in
-other common programming languages. Many of these data types don't
-have corresponding data types in Perl. To Perl, strings, numbers,
-booleans, and dates are just scalars. However, in order to communicate
-effectively with other languages (and this is the point of WDDX), you
-do have to learn the basic WDDX data types. Here is a table that maps
-the WDDX data type to Perl, along with the intermediate object WDDX.pm
-represents it as:
-
- WDDX Type      WDDX.pm Data Object      Perl Type
- ---------      -------------------      ---------
- String         WDDX::String             Scalar
- Number         WDDX::Number             Scalar
- Boolean        WDDX::Boolean            Scalar (1 or "")
- Datetime       WDDX::Datetime           Scalar (seconds since epoch)
- Null           WDDX::Null               Scalar (undef)
- Binary         WDDX::Binary             Scalar
- Array          WDDX::Array              Array
- Struct         WDDX::Struct             Hash
- Recordset      WDDX::Recordset          WDDX::Recordset
-
-
-In languages that have data types similar to the WDDX data types, the
-WDDX modules allow you to convert directly from a variable to a WDDX
-packet and vice versa. This Perl implementation is different; here you
-must always go through an intermediate stage where the data is
-represented by an object with a corresponding data type. These objects
-can be converted to a WDDX packet, converted to a basic Perl type, or
-converted to JavaScript code (which will recreate the data for you in
-JavaScript). We will refer to these objects as I<data objects>
-throughout this documentation.
-
-=head1 Requirements
-
-This module requires L<XML::Parser> and L<MIME::Base64>, which are
-both available on CPAN at http://www.cpan.org/. Windows users note:
-These modules use compiled code, but I have been told that they are
-both included with recent distributions of ActiveState Perl.
-
-
-=head1 METHODS
-
-=over
-
-
-=item new
-
-This creates a new WDDX object. You need one of these to do pretty much 
-anything else. It doesn't take any arguments.
-
-
-=item $wddx->deserialize( $string_or_filehandle )
-
-This method deserializes a WDDX packet and returns a data object. Note
-that you can pass either a string or a reference to an open filehandle
-containing a packet (XML::Parser is flexible this way):
-
-  $wddx_obj = $wddx->deserialize( $packet );     # OR
-  $wddx_obj = $wddx->deserialize( \*HANDLE );
-
-If WDDX.pm or the underlying L<XML::Parser> finds any errors with the
-structure of the WDDX packet, then it will C<die> with an error
-message that identifies the problem. If you don't want this to terminate
-your script, you will have to place this call within an C<eval> block
-to trap the C<die>.
-
-=item $wddx->serialize( $wddx_obj )
-
-This accepts a data object as an argument and returns a WDDX packet.
-This method calls the as_packet() method on the data object it
-receives. However, this method does provide one feature that
-as_packet() does not. If C<$WDDX::INDENT> is set to a defined value,
-then the generated WDDX packet is indented using C<$WDDX::INDENT> as
-the unit of indentation. Otherwise packets are generated without extra
-whitespace.
-
-Note that the generated packet is not a valid XML document without 
-the header, see below.
-
-
-=item $wddx->header
-
-This returns a header that should accompany every serialized packet you 
-send.
-
-
-=back
-
+__END__
 =head1 WDDX DATA OBJECTS
 
 =head2 Common Methods
@@ -1171,4 +1161,5 @@ for this module:
 
 =head1 AUTHOR
 
-Scott Guelich E<lt>scott@scripted.comE<gt>
+Origianally by Scott Guelich E<lt>scott@scripted.comE<gt>, now maintained
+by Andy Lester C<< <andy@petdance.com> >>.

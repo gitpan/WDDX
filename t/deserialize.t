@@ -1,6 +1,5 @@
 #!/usr/bin/perl
 
-use lib '..';
 use WDDX;
 use Time::Local;
 use strict;

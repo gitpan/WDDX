@@ -1,5 +1,18 @@
 WDDX History
 
+1.02 	- Mon Dec  1 21:42:29 CST 2003
+    Taken over by Andy Lester
+
+    [FIXES]
+    WDDX needed a good update and modernization to let it run under perl
+    5.8.0 and higher.
+
+    * Fixed up some dependencies in Makefile.PL
+    * Cleaned up warnings on things like ambiguous calls to keys().
+    * Added more tests.
+    * Removed automatic version number generation
+
+
 Version 1.01 (7/29/00)
 
 Bug fix.

@@ -1,9 +1,12 @@
-README
-MANIFEST
 Changes
 Makefile.PL
-t/serialize.t
+MANIFEST
+META.yml
+README
+t/00.load.t
 t/deserialize.t
+t/pod.t
+t/serialize.t
 WDDX.pm
 WDDX/Array.pm
 WDDX/Binary.pm

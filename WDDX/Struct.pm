@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # 
-# $Id: Struct.pm,v 2.0 2000/01/17 17:05:25 sguelich Exp $
+# $Id: Struct.pm,v 1.2 2003/10/28 16:41:12 andy Exp $
 # 
 # This code is copyright 1999-2000 by Scott Guelich <scott@scripted.com>
 # and is distributed according to the same conditions as Perl itself
@@ -141,7 +141,7 @@ sub _serialize {
     my $hashref = $self->{value};
     my $output = "<struct>";
     
-    foreach ( keys %$hashref ) {
+    foreach ( CORE::keys %$hashref ) {
         $output .= "<var name='$_'>";
         $output .= $hashref->{$_}->_serialize;
         $output .= "</var>";
@@ -157,7 +157,7 @@ sub _deserialize {
     my $wddx_hashref = $self->{value};
     my %hash;
     
-    foreach ( keys %$wddx_hashref ) {
+    foreach ( CORE::keys %$wddx_hashref ) {
         $hash{$_} = $wddx_hashref->{$_}->_deserialize;
     }
     return \%hash;

@@ -1,6 +1,7 @@
 WDDX.pm
-$Date: 2000/01/17 17:04:38 $
+$Date: 2003/12/02 03:44:33 $
 by Scott Guelich <scott@scripted.com>
+maintained by Andy Lester <andy@petdance.com>
 
 This module provides a perl interface to WDDX. The latest version of this
 module as well as additional information can be found at
@@ -70,9 +71,9 @@ Refer to the POD in WDDX.pm for usage and more information.
 
 ----------------------------
 
-If you find any problems or have any comments, please contact me at
-scott@scripted.com. You can also find all sorts of WDDX help and
-resources at www.wddx.org, especially in the WDDX Forums.
+If you find any problems or have any comments, please contact Andy
+Lester at andy@petdance.com. You can also find all sorts of WDDX help
+and resources at www.wddx.org, especially in the WDDX Forums.
 
 Have fun.
 

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # 
-# $Id: Array.pm,v 2.0 2000/01/17 17:05:25 sguelich Exp $
+# $Id: Array.pm,v 1.2 2003/10/28 17:00:51 andy Exp $
 # 
 # This code is copyright 1999-2000 by Scott Guelich <scott@scripted.com>
 # and is distributed according to the same conditions as Perl itself
@@ -107,7 +107,7 @@ sub splice {
     my( $self, $offset, $length, @values ) = @_;
     my @result;
     
-    if ( defined @values ) {
+    if ( @values ) {
         foreach ( @values ) {
             croak "The values assigned must be WDDX data objects.\n" 
                 unless eval { $_->can( "_serialize" ) };
