@@ -1,0 +1,76 @@
+WDDX.pm
+$Date: 1999/11/02 06:25:00 $
+by Scott Guelich <scott@scripted.com>
+
+This module provides a perl interface to WDDX. The latest version of this
+module as well as additional information can be found at
+http://www.scripted.com/wddx/. For more information about WDDX please visit
+http://www.wddx.org/.
+
+This code is copyright 1999 by Scott Guelich. You may use and distribute 
+this code according to the same terms that Perl is distributed.
+
+
+INSTALL
+-------
+
+NOTE: These modules now require the MIME::Base64 module available from CPAN,
+http://www.cpan.org/modules/by-module/MIME/. The file you want will be
+named MIME-Base64-x.xx.tar.gz (where x is some digit). You also need
+XML::Parser, which will be at http://www.cpan.org/modules/by-module/XML/
+and named XML-Parser-x.xx.tar.gz. You can find help for installing both
+these modules at http://www.perl.com/CPAN/modules/INSTALL.html.
+
+I have been told that recent distributions of ActiveState Perl include
+these modules, so Windows users should check before downloading and 
+installing them.
+
+To install the WDDX modules, use CPAN.pm. If you can't use CPAN.pm,
+then follow these steps:
+
+ 1. Expand the package using one of these commands:
+     tar xvfz WDDX-*.tar.gz              # If your system has GNU tar
+     gzip -cd WDDX-*.tar.gz | tar xvf -  # If your tar is gzip-challenged
+
+ 2. Run the following series of commands:
+     cd WDDX-*
+     perl Makefile.PL
+     make
+     make test
+
+ 3. You must do this step as superuser:
+     make install
+
+If you do not have superuser priveleges and your sysadmin is too unfriendly
+to install this for you, then you can install this module in another
+location by replacing "perl Makefile.PL" from step 2 with this (replace
+/home/USER/lib with some directory on your system):
+
+    perl Makefile.PL LIB=/home/USER/lib
+
+You can then run "make", "make test", and"make install" yourself to have
+the module installed in the specified lib directory. If you do override
+the install directory this way, you will need to add the following line
+to the top of your scripts:
+
+    use lib "/home/USER/lib";
+
+
+Non-Unix Install
+----------------
+
+If your system does not support 'make', then you can manually copy
+WDDX.pm and the WDDX folder to the site_perl folder in your Perl lib
+folder. 
+
+
+Refer to the POD in WDDX.pm for usage and more information.
+
+
+----------------------------
+
+If you find any problems or have any questions or comments, please contact
+me at scott@scripted.com.
+
+Have fun.
+
