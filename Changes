@@ -1,5 +1,19 @@
 WDDX History
 
+Version 1.01 (7/29/00)
+
+Bug fix.
+
+  * Fixed a bug that wouldn't allow undef values in WDDX::Recordsets;
+    should properly be encoded as a WDDX::Null now. However, this is a
+    kludge. WDDX::Recordset should probably be rewritten to allow a field
+    to have differing data types (WDDX::Null is the only exception
+    currently)... but this will break compatibility.
+  * Perl 5.60 changed how the map function works. Now scalars in numeric
+    form are converted to string form (seems like a bug to me). This broke
+    a few of the make tests, so these have been removed to allow WDDX.pm
+    to build with 5.60.
+
 Version 1.00 (1/17/00)
 
 Added new methods to WDDX::Array and WDDX::Struct.

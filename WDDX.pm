@@ -1,15 +1,16 @@
 #!/usr/bin/perl -w
 # 
-# $Id: WDDX.pm,v 2.0 2000/01/17 17:04:38 sguelich Exp $
+# $Id: WDDX.pm,v 2.1 2000/07/30 02:12:44 sguelich Exp $
 # 
-# This code is copyright 1999 by Scott Guelich <scott@scripted.com>
+# This code is copyright 1999-2000 by Scott Guelich <scott@scripted.com>
 # and is distributed according to the same conditions as Perl itself
 # Please visit http://www.scripted.com/wddx/ for more information
+#
 
 package WDDX;
 
 # Auto-generate $VERSION from CVS/RCS
-$VERSION = do { my @r = ( q$Revision: 2.0 $ =~ /\d+/g ); $r[0]--; sprintf "%d." . "%02d" x $#r, @r };
+$VERSION = do { my @r = ( q$Revision: 2.1 $ =~ /\d+/g ); $r[0]--; sprintf "%d." . "%02d" x $#r, @r };
 
 use strict;
 use Carp;
@@ -1160,6 +1161,13 @@ for this module:
  David J. MacKenzie
  Jon Sala
  Wolfgang ???
+ James Ritter
+ Miguel Marques
+ Vadim Geshel
+ Adolfo Garcia
+ Sean McGeever
+ Allie Rogers
+ Ziying Sherwin
 
 =head1 AUTHOR
 

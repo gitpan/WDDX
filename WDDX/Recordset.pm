@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 # 
-# $Id: Recordset.pm,v 2.0 2000/01/17 17:05:25 sguelich Exp $
+# $Id: Recordset.pm,v 2.1 2000/07/30 02:13:01 sguelich Exp $
 # 
 # This code is copyright 1999-2000 by Scott Guelich <scott@scripted.com>
 # and is distributed according to the same conditions as Perl itself
@@ -17,7 +17,7 @@ use Carp;
 
 require WDDX;
 
-my @Data_Types = qw( boolean number string datetime );
+my @Data_Types = qw( boolean number string datetime binary null );
 
 { my $i_hate_the_w_flag_sometimes = [
     $WDDX::PACKET_HEADER,
@@ -402,7 +402,9 @@ sub _serialize {
         my $column = $self->get_column( $col_idx );
         my $field;
         foreach $field ( @$column ) {
-            my $var = eval "WDDX::\u$types->[$col_idx]\->new( \$field )";
+            my $var = defined( $field ) ?
+                        eval "WDDX::\u$types->[$col_idx]\->new( \$field )" :
+                        new WDDX::Null();
             die "$@\n" if $@;
             $output .= $var->_serialize;
         }
